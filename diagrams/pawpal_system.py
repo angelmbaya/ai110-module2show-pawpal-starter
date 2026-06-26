@@ -154,7 +154,9 @@ class Owner:
                 recurring=task.recurring,
                 frequency=task.frequency,
             )
-            pet.add_task(new_task)
+            # Append directly to allow a fresh instance even when a completed
+            # task with the same name remains in the list.
+            pet.tasks.append(new_task)
             return new_task
         return None
 

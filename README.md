@@ -66,19 +66,26 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 
 ## 🧪 Testing PawPal+
 
+Run the automated tests for PawPal+ with:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+What the tests cover:
 
+- Core task behavior (adding tasks, status transitions).
+- Scheduling correctness and ordering (priority then duration).
+- Recurring task recreation when a recurring task is completed.
+- Lightweight conflict detection for overlapping or same-time tasks.
+
+Sample successful test run:
+
+```bash
+5 passed in 0.04s
 ```
-# Paste your pytest output here
-```
+
+Confidence in scheduler correctness based on these tests: ★★★★☆ (4/5)
 
 ## 📐 Smarter Scheduling
 
