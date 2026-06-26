@@ -1,6 +1,13 @@
 classDiagram
     %% PawPal+ class diagram — keep this updated as your implementation evolves.
 
+    class Priority {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
     class Owner {
         +str name
         +int available_minutes
@@ -8,6 +15,7 @@ classDiagram
         +list~Pet~ pets
         +add_pet(pet) void
         +remove_pet(pet) void
+        +generate_schedule(day) Schedule
     }
 
     class Pet {
@@ -23,23 +31,33 @@ classDiagram
     class Task {
         +str name
         +int duration
-        +str priority
+        +Priority priority
         +bool recurring
         +str frequency
         +fits_within(minutes) bool
     }
 
+    class PlannedItem {
+        +Pet pet
+        +Task task
+        +time start_time
+    }
+
     class Schedule {
+        +Owner owner
         +date day
-        +list~Task~ planned_tasks
+        +list~PlannedItem~ planned_items
         +int total_minutes
         +str explanation
-        +generate(tasks, available_minutes) list~Task~
-        +sort_by_priority(tasks) list~Task~
+        +generate() list~PlannedItem~
+        -sort_by_priority(tasks) list~Task~
         +explain() str
     }
 
     Owner "1" --> "*" Pet : owns
     Pet "1" --> "*" Task : has
     Owner "1" --> "1" Schedule : generates
-    Schedule "1" --> "*" Task : plans
+    Schedule "1" --> "*" PlannedItem : plans
+    PlannedItem --> Pet : for
+    PlannedItem --> Task : schedules
+    Task --> Priority : ranked by
