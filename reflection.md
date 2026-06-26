@@ -26,13 +26,13 @@ The Schedule class is responsible for creating the daily care plan. It stores th
 
 Yes. After reviewing my initial skeleton, I made four design changes:
 
-1. **Priority became an enum instead of a free-form string.** Originally `priority` was a plain string like `"high"`/`"medium"`/`"low"`. A typo such as `"hi"` would have sorted incorrectly with no error, and sorting required mapping strings to numbers. I replaced it with a `Priority(IntEnum)` (LOW=1, MEDIUM=2, HIGH=3) so tasks sort directly by their value, invalid priorities are impossible, and the UI gets a fixed set of choices.
+1. Priority became an enum instead of a free-form string. Originally priority was a plain string like "high"/"medium"/"low". A typo such as "hi" would have sorted incorrectly with no error, and sorting required mapping strings to numbers. I replaced it with a Priority(IntEnum) (LOW=1, MEDIUM=2, HIGH=3) so tasks sort directly by their value, invalid priorities are impossible, and the UI gets a fixed set of choices.
 
-2. **Schedule is now linked to the Owner.** My first version had `Schedule` take only a `day`, which meant the caller had to manually gather every pet's tasks and the owner's time budget and pass them in. This contradicted my UML's "Owner generates Schedule" relationship. I gave `Schedule` an `owner` reference and added an `Owner.generate_schedule()` method so the owner drives plan creation and the schedule can read `available_minutes` and `pets` itself.
+2. Schedule is now linked to the Owner. My first version had Schedule take only a day, which meant the caller had to manually gather every pet's tasks and the owner's time budget and pass them in. This contradicted my UML's "Owner generates Schedule" relationship. I gave Schedule an owner reference and added an Owner.generate_schedule() method so the owner drives plan creation and the schedule can read available_minutes and pets itself.
 
-3. **Added a PlannedItem class with start times.** The schedule originally stored a flat `list[Task]`, which lost track of which pet each task belonged to and had no time-of-day. Since the target output shows scheduled times (e.g. "08:00 — Morning walk") and supports multiple pets, I introduced `PlannedItem(pet, task, start_time)` and changed the schedule to hold `list[PlannedItem]`. This makes per-pet labels and time-slot/conflict handling possible.
+3. Added a PlannedItem class with start times. The schedule originally stored a flat list[Task], which lost track of which pet each task belonged to and had no time-of-day. Since the target output shows scheduled times (e.g. "08:00 — Morning walk") and supports multiple pets, I introduced PlannedItem(pet, task, start_time) and changed the schedule to hold list[PlannedItem]. This makes per-pet labels and time-slot/conflict handling possible.
 
-4. **Made sorting an internal helper.** `sort_by_priority` was public, which invited callers to sort separately from `generate` and risk inconsistent ordering. I renamed it to `_sort_by_priority` so sorting stays an internal step of `generate`, and decided the tie-break rule up front (same priority → shorter duration first, to fit more tasks).
+4. Made sorting an internal helper. sort_by_priority was public, which invited callers to sort separately from generate and risk inconsistent ordering. I renamed it to _sort_by_priority so sorting stays an internal step of generate, and decided the tie-break rule up front (same priority → shorter duration first, to fit more tasks).
 
 ---
 
@@ -49,6 +49,8 @@ Yes. After reviewing my initial skeleton, I made four design changes:
 - Why is that tradeoff reasonable for this scenario?
 
 ---
+
+One concrete tradeoff the scheduler makes is to prefer higher-priority, shorter-duration tasks over lower-priority longer tasks (priority → duration as a tie-break). This greedy strategy helps maximize the number of tasks completed within a limited time budget, which is often what a busy owner wants: fit more essential items into the morning. The downside is that it can unfairly starve a single longer task of time even if that longer task is important for a particular pet (for example, a long grooming session that must happen once). A more optimal but more complex approach (like knapsack-style dynamic programming or backtracking search) could yield globally better allocations but would increase implementation complexity and runtime; for a responsive UI and simple daily planning needs the greedy rule is a reasonable compromise.
 
 ## 3. AI Collaboration
 

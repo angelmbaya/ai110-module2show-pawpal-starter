@@ -2,6 +2,16 @@
 
 You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
 
+##Sample Output
+Today's schedule for Sam:
+Planned 5 task(s) using 85 of 90 available minutes, ordered by priority (highest first).
+  08:00 — Feeding (10 min) [priority: high] for Biscuit
+  08:10 — Feeding (10 min) [priority: high] for Whiskers
+  08:20 — Morning walk (30 min) [priority: high] for Biscuit
+  08:50 — Litter cleaning (15 min) [priority: medium] for Whiskers
+  09:05 — Grooming (20 min) [priority: low] for Whiskers
+  Skipped: Enrichment play (25 min) for Biscuit — not enough time remaining.
+
 ## Scenario
 
 A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
@@ -76,10 +86,10 @@ Sample test output:
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Schedule._sort_key`, `Schedule.generate`, `Schedule.sort_by_time` | Tasks are ordered by priority (high→low), then shorter duration, then non-recurring first. `sort_by_time()` returns the chronological plan.
+| Filtering | `Schedule.generate(status_filter=...)`, `Schedule.filter_tasks` | Filter by task status (`pending`, `scheduled`, `completed`, `skipped`) or by pet name before or after generation.
+| Conflict handling | `Schedule._has_conflict`, `Schedule.detect_conflicts` | Lightweight conflict detection collects warnings for overlaps or identical start times for the same pet. The scheduler returns warnings instead of raising exceptions.
+| Recurring tasks | `Task.recurring`, `Owner.complete_task` | When a recurring task is completed, a fresh pending instance for the next occurrence is automatically created and added to the pet.
 
 ## 📸 Demo Walkthrough
 
