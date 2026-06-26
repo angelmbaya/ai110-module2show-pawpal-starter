@@ -42,7 +42,14 @@ Yes. After reviewing my initial skeleton, I made four design changes:
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
+The scheduler considers the following constraints:
 
+- Owner available time (`available_minutes`) — the hard budget for the day's plan.
+- Task priority (`Priority` enum) — higher priority tasks are preferred.
+- Task duration — shorter tasks are favored when priorities are equal so more items fit.
+- Recurrence — recurring tasks are re-created after completion and remain eligible for scheduling.
+
+Prioritization is purposely simple and greedy: rank by priority, tie-break by duration, and prefer non-recurring tasks. This reflects the common user need to fit more high-priority items into a limited morning routine; it keeps the algorithm fast and predictable.
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
@@ -52,7 +59,12 @@ Yes. After reviewing my initial skeleton, I made four design changes:
 
 One concrete tradeoff the scheduler makes is to prefer higher-priority, shorter-duration tasks over lower-priority longer tasks (priority → duration as a tie-break). This greedy strategy helps maximize the number of tasks completed within a limited time budget, which is often what a busy owner wants: fit more essential items into the morning. The downside is that it can unfairly starve a single longer task of time even if that longer task is important for a particular pet (for example, a long grooming session that must happen once). A more optimal but more complex approach (like knapsack-style dynamic programming or backtracking search) could yield globally better allocations but would increase implementation complexity and runtime; for a responsive UI and simple daily planning needs the greedy rule is a reasonable compromise.
 
-## 3. AI Collaboration
+I used AI iteratively across the project for design refinement, implementation suggestions, targeted refactorings, and test generation. The most effective prompts were concise requests for one focused change (for example: "add conflict detection to Schedule" or "return planned items sorted by start time and display as a table in Streamlit"). Asking for small, testable edits and for tests to validate behavior produced the best results.
+
+**b. Judgment and verification**
+
+- I evaluated AI suggestions by running the test suite and manually running `main.py` to inspect outputs. When the AI suggested code that would change public APIs (like method names), I favored minimal, backwards-compatible changes and added small tests to validate behavior.
+- I rejected or modified suggestions that introduced unnecessary complexity without clear benefit (for example, premature attempts to implement a full optimal knapsack solver). Instead I accepted a greedy heuristic and documented the tradeoff.
 
 **a. How you used AI**
 
@@ -85,7 +97,32 @@ One concrete tradeoff the scheduler makes is to prefer higher-priority, shorter-
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+I am most satisfied with producing a working, test-covered scheduler that integrates cleanly with a simple Streamlit UI and that handles recurring tasks and conflict warnings gracefully. The small test suite gives confidence that key behaviors (sorting, recurrence, conflicts) work as intended.
 
+**b. What you would improve**
+
+- Replace the greedy scheduler with a lightweight optimization (e.g., bounded knapsack or integer programming) to better handle long, high-value tasks.
+- Add persistence (a lightweight JSON or SQLite store) so owners' pets and tasks survive restarts and can be edited through the UI.
+
+**c. Key takeaway**
+
+- Acting as the lead architect when collaborating with AI means keeping control of the high-level design, asking for incremental changes, and verifying behavior with small unit tests. AI accelerates iteration, but you must still set constraints and make tradeoffs explicit.
+
+**d. Which AI features were most effective?**
+
+- Focused code edits and diffs: asking for patches that modify specific functions or add small helper methods worked especially well and reduced the need for manual merges.
+- Test generation: having the AI propose small unit tests for edge cases (sorting, recurrence, conflict) made verification fast and guided design.
+- Refactoring suggestions: the AI helped simplify sorting logic and add clear docstrings that improved readability.
+
+**e. How separate chat sessions helped organization**
+
+- Using separate sessions for design, implementation, and testing created clear mental checkpoints. Each session had a focused goal (UML → code skeletons → feature implementation → tests → docs), which reduced context switching and made it easier to roll back or rework specific areas without losing the overall picture.
+
+**f. What I learned about being a lead architect with AI collaboration**
+
+- Maintain a small, testable scope for each change. Request small, verifiable patches from the AI, run tests, and iterate.
+- Be explicit about invariants and user-facing APIs so the AI can make safe edits.
+- Use the AI to explore alternatives quickly, but retain final authority to choose tradeoffs; document those tradeoffs clearly for future maintainers.
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?

@@ -89,23 +89,51 @@ Confidence in scheduler correctness based on these tests: ★★★★☆ (4/5)
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+This project implements several practical scheduling behaviors to make daily pet care planning useful and predictable:
 
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | `Schedule._sort_key`, `Schedule.generate`, `Schedule.sort_by_time` | Tasks are ordered by priority (high→low), then shorter duration, then non-recurring first. `sort_by_time()` returns the chronological plan.
-| Filtering | `Schedule.generate(status_filter=...)`, `Schedule.filter_tasks` | Filter by task status (`pending`, `scheduled`, `completed`, `skipped`) or by pet name before or after generation.
-| Conflict handling | `Schedule._has_conflict`, `Schedule.detect_conflicts` | Lightweight conflict detection collects warnings for overlaps or identical start times for the same pet. The scheduler returns warnings instead of raising exceptions.
-| Recurring tasks | `Task.recurring`, `Owner.complete_task` | When a recurring task is completed, a fresh pending instance for the next occurrence is automatically created and added to the pet.
+- Task ordering: tasks are ordered by `Priority` (HIGH → MEDIUM → LOW), then by shorter duration to fit more items into limited time, and non-recurring tasks are preferred over recurring ones when tie-breaking.
+- Chronological view: `Schedule.sort_by_time()` produces the final ordered list of `PlannedItem`s with start times for display.
+- Filtering: you can generate schedules for all pets or a single pet and filter tasks by status (`pending`, `scheduled`, `completed`, `skipped`) using `Schedule.generate(..., status_filter=...)` and `Schedule.filter_tasks(...)`.
+- Recurring tasks: recurring tasks (daily/weekly) persist; when a recurring task is marked completed via `Owner.complete_task(...)`, the system creates a fresh pending instance for the next occurrence.
+- Conflict detection: the scheduler uses a lightweight overlap detection and `Schedule.detect_conflicts()` to collect human-readable warnings when two tasks overlap or two tasks for the same pet share the same start time. Warnings are surfaced to the UI instead of raising errors.
+
+Key methods and where to look in code:
+
+- `Schedule.generate()` — core planning algorithm that selects tasks to fit available minutes.
+- `Schedule._sort_key()` — stable sort key implementation (priority, duration, recurring).
+- `Schedule.sort_by_time()`, `Schedule.filter_tasks()`, `Schedule.detect_conflicts()` — display & validation helpers.
+- `Owner.complete_task()` — marks a task completed and recreates recurring tasks.
+
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+The Streamlit UI (`app.py`) exposes the main features of PawPal+ for quick experimentation.
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Owner panel: edit the owner name and available minutes. These values define the time budget used by the scheduler.
+2. Add a pet: provide a pet name, species, breed and age. Pets are de-duplicated by name.
+3. Add tasks to a pet: select a pet, enter a task title, duration, priority and whether it's recurring. Tasks are normalized to avoid duplicate names per pet.
+4. Build schedule: choose which pet(s) to include (`all` or a single pet) and select a task status filter. Click `Generate schedule` to run the planner.
+   - The app displays any detected conflicts as warnings using `st.warning`.
+   - The schedule explanation is shown and the chronological plan is rendered as a table via `st.table`.
+   - Skipped tasks (not enough time) are displayed in their own table.
+5. Recurring tasks: when a recurring task is marked completed via code or future UI controls, the system automatically creates a fresh pending instance for the next occurrence.
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+Example workflow (user actions):
+
+- Add owner "Jordan" with 120 available minutes.
+- Add pet "Mochi" (dog) and pet "Biscuit" (dog).
+- Add tasks: "Morning walk" (30, high) to Mochi, "Feeding" (10, high) to Biscuit, "Daily meds" (5, high, recurring) to Biscuit.
+- Select `all` pets and `pending` tasks, then click `Generate schedule`.
+- Inspect the chronological table, note any `st.warning` messages if conflicts are present, and view skipped tasks.
+
+Sample CLI output from running `main.py` (example):
+
+```bash
+Today's schedule for Sam:
+Planned 4 task(s) using 65 of 90 available minutes, ordered by priority (highest first).
+  08:00 — Feeding (10 min) [priority: high] for Biscuit
+  08:10 — Morning walk (30 min) [priority: high] for Biscuit
+  08:40 — Litter cleaning (15 min) [priority: medium] for Whiskers
+  08:55 — Grooming (10 min) [priority: low] for Whiskers
+Warning: Biscuit has two tasks at 08:10: 'Morning walk' and 'Conflicting task'.
+```

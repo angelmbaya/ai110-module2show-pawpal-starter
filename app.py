@@ -134,11 +134,46 @@ if st.button("Generate schedule"):
     else:
         pet_name = None if schedule_pet == "all" else schedule_pet
         schedule = owner.generate_schedule(pet_name=pet_name, status_filter=schedule_status)
-        st.markdown("### Schedule")
+
+        # Detect conflicts and show warnings
+        warnings = schedule.detect_conflicts()
+        if warnings:
+            for w in warnings:
+                st.warning(w)
+
+        st.success("Schedule generated")
+        st.markdown("### Schedule Explanation")
         st.text(schedule.explanation)
+
+        # Present the planned items in a chronological table
+        planned = schedule.sort_by_time()
+        if planned:
+            rows = []
+            for item in planned:
+                rows.append(
+                    {
+                        "start_time": item.start_time.strftime("%H:%M") if item.start_time else "--:--",
+                        "pet": item.pet.name,
+                        "task": item.task.name,
+                        "duration_min": item.task.duration,
+                        "priority": item.task.priority.name.lower(),
+                        "status": item.task.status,
+                    }
+                )
+            st.table(rows)
+        else:
+            st.info("No planned items to show.")
+
         if schedule.skipped:
             st.markdown("### Skipped tasks")
-            for pet, task in schedule.skipped:
-                st.write(
-                    f"- {task.name} for {pet.name} ({task.duration} min, priority={task.priority.name.lower()}, status={task.status})"
-                )
+            skipped_rows = [
+                {
+                    "pet": pet.name,
+                    "task": task.name,
+                    "duration_min": task.duration,
+                    "priority": task.priority.name.lower(),
+                    "status": task.status,
+                }
+                for pet, task in schedule.skipped
+            ]
+            st.table(skipped_rows)

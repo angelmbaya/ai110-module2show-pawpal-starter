@@ -1,0 +1,72 @@
+classDiagram
+    %% PawPal+ final class diagram — reflects implemented classes and key methods
+
+    class Priority {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    class Owner {
+        +str name
+        +int available_minutes
+        +list~str~ preferences
+        +list~Pet~ pets
+        +add_pet(pet) void
+        +remove_pet(pet) void
+        +get_pet(name) Pet | None
+        +complete_task(pet, task) Task | None
+        +generate_schedule(day, pet_name, status_filter) Schedule
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +str breed
+        +int age
+        +list~Task~ tasks
+        +add_task(task) void
+        +remove_task(task) void
+        +pending_tasks() list~Task~
+    }
+
+    class Task {
+        +str name
+        +int duration
+        +Priority priority
+        +bool recurring
+        +str frequency
+        +str status
+        +fits_within(minutes) bool
+        +mark_scheduled() void
+        +mark_skipped() void
+        +mark_completed() void
+    }
+
+    class PlannedItem {
+        +Pet pet
+        +Task task
+        +time start_time
+    }
+
+    class Schedule {
+        +Owner owner
+        +date day
+        +list~PlannedItem~ planned_items
+        +int total_minutes
+        +str explanation
+        +list~str~ warnings
+        +generate(pet_name, status_filter) list~PlannedItem~
+        +sort_by_time() list~PlannedItem~
+        +filter_tasks(pet_name, status) list~PlannedItem~
+        +detect_conflicts() list~str~
+    }
+
+    Owner "1" --> "*" Pet : owns
+    Pet "1" --> "*" Task : has
+    Owner "1" --> "1" Schedule : generates
+    Schedule "1" --> "*" PlannedItem : plans
+    PlannedItem --> Pet : for
+    PlannedItem --> Task : schedules
+    Task --> Priority : ranked by
